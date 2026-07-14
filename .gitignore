@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment files
+.env
+*.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+*.log
+/Users/duanhongyu/.npm/_logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Test / Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Uploads
+/uploads/
+/media/
+.env
+node_modules/
