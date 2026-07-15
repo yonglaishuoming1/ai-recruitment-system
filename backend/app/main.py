@@ -5,7 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import candidates_router, jobs_router, interviews_router
+from app.api import (
+    candidates_router,
+    jobs_router,
+    interviews_router,
+    feedback_router,
+)
 
 
 @asynccontextmanager
@@ -44,3 +49,4 @@ async def health_check():
 app.include_router(candidates_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(interviews_router, prefix="/api/v1")
+app.include_router(feedback_router, prefix="/api/v1")

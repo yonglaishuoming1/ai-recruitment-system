@@ -1,18 +1,18 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
-# ── Candidate ──
+# ===== Candidate =====
 class CandidateBase(BaseModel):
-    name: str
-    email: str
-    phone: Optional[str] = None
-    position: str
+    name: str = Field(..., max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    email: str = Field(..., max_length=255)
+    resume_text: Optional[str] = None
     resume_url: Optional[str] = None
-    notes: Optional[str] = None
+    status: Optional[str] = "new"
 
 
 class CandidateCreate(CandidateBase):
@@ -21,39 +21,28 @@ class CandidateCreate(CandidateBase):
 
 class CandidateUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[str] = None
     phone: Optional[str] = None
-    position: Optional[str] = None
-    status: Optional[str] = None
+    email: Optional[str] = None
+    resume_text: Optional[str] = None
     resume_url: Optional[str] = None
-    ai_score: Optional[float] = None
-    notes: Optional[str] = None
+    status: Optional[str] = None
 
 
 class CandidateResponse(CandidateBase):
     id: uuid.UUID
-    status: str
-    ai_score: Optional[float] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
 
 
-class CandidateListResponse(BaseModel):
-    total: int
-    items: list[CandidateResponse]
-
-
-# ── Job ──
+# ===== Job =====
 class JobBase(BaseModel):
-    title: str
-    department: str
-    location: Optional[str] = None
-    description: Optional[str] = None
-    requirements: Optional[str] = None
-    salary_range: Optional[str] = None
-    headcount: int = 1
+    title: str = Field(..., max_length=200)
+    department: str = Field(..., max_length=100)
+    jd_text: Optional[str] = None
+    competency_model: Optional[dict[str, Any]] = None
+    status: Optional[str] = "draft"
 
 
 class JobCreate(JobBase):
@@ -63,35 +52,27 @@ class JobCreate(JobBase):
 class JobUpdate(BaseModel):
     title: Optional[str] = None
     department: Optional[str] = None
-    location: Optional[str] = None
-    description: Optional[str] = None
-    requirements: Optional[str] = None
-    salary_range: Optional[str] = None
-    headcount: Optional[int] = None
+    jd_text: Optional[str] = None
+    competency_model: Optional[dict[str, Any]] = None
     status: Optional[str] = None
-    is_active: Optional[bool] = None
 
 
 class JobResponse(JobBase):
     id: uuid.UUID
-    status: str
-    is_active: bool
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
 
 
-# ── Interview ──
+# ===== Interview =====
 class InterviewBase(BaseModel):
     candidate_id: uuid.UUID
     job_id: Optional[uuid.UUID] = None
-    interview_type: str
-    scheduled_at: datetime
-    duration_minutes: int = 60
+    round: int = 1
     interviewer: Optional[str] = None
-    location: Optional[str] = None
-    notes: Optional[str] = None
+    scheduled_time: datetime
+    status: Optional[str] = "pending"
 
 
 class InterviewCreate(InterviewBase):
@@ -99,22 +80,47 @@ class InterviewCreate(InterviewBase):
 
 
 class InterviewUpdate(BaseModel):
-    status: Optional[str] = None
-    scheduled_at: Optional[datetime] = None
-    duration_minutes: Optional[int] = None
+    round: Optional[int] = None
     interviewer: Optional[str] = None
-    location: Optional[str] = None
-    notes: Optional[str] = None
-    feedback: Optional[str] = None
-    rating: Optional[int] = None
+    scheduled_time: Optional[datetime] = None
+    status: Optional[str] = None
 
 
 class InterviewResponse(InterviewBase):
     id: uuid.UUID
-    status: str
-    feedback: Optional[str] = None
-    rating: Optional[int] = None
     created_at: datetime
-    updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ===== Feedback =====
+class FeedbackBase(BaseModel):
+    interview_id: uuid.UUID
+    dimension_scores: Optional[dict[str, Any]] = None
+    comment: Optional[str] = None
+    evaluator: Optional[str] = None
+
+
+class FeedbackCreate(FeedbackBase):
+    pass
+
+
+class FeedbackUpdate(BaseModel):
+    dimension_scores: Optional[dict[str, Any]] = None
+    comment: Optional[str] = None
+    evaluator: Optional[str] = None
+
+
+class FeedbackResponse(FeedbackBase):
+    id: uuid.UUID
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ===== Pagination =====
+class PaginatedResponse(BaseModel):
+    items: list[Any]
+    total: int
+    page: int
+    page_size: int

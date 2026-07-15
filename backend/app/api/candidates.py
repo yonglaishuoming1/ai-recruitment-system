@@ -6,18 +6,18 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.candidate import Candidate, CandidateStatus
+from app.models.candidate import Candidate
 from app.schemas import (
     CandidateCreate,
     CandidateUpdate,
     CandidateResponse,
-    CandidateListResponse,
+    PaginatedResponse,
 )
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
 
 
-@router.get("", response_model=CandidateListResponse)
+@router.get("", response_model=PaginatedResponse)
 async def list_candidates(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -32,21 +32,20 @@ async def list_candidates(
         query = query.where(
             Candidate.name.ilike(f"%{search}%")
             | Candidate.email.ilike(f"%{search}%")
-            | Candidate.position.ilike(f"%{search}%")
         )
     query = query.order_by(Candidate.created_at.desc())
 
-    # Count
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar()
 
-    # Paginate
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     items = result.scalars().all()
 
-    return CandidateListResponse(
+    return PaginatedResponse(
         total=total,
+        page=(skip // limit) + 1,
+        page_size=limit,
         items=[CandidateResponse.model_validate(c) for c in items],
     )
 

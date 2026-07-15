@@ -6,17 +6,18 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.job import Job, JobStatus
+from app.models.job import Job
 from app.schemas import (
     JobCreate,
     JobUpdate,
     JobResponse,
+    PaginatedResponse,
 )
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
-@router.get("")
+@router.get("", response_model=PaginatedResponse)
 async def list_jobs(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -38,10 +39,12 @@ async def list_jobs(
     result = await db.execute(query)
     items = result.scalars().all()
 
-    return {
-        "total": total,
-        "items": [JobResponse.model_validate(j) for j in items],
-    }
+    return PaginatedResponse(
+        total=total,
+        page=(skip // limit) + 1,
+        page_size=limit,
+        items=[JobResponse.model_validate(j) for j in items],
+    )
 
 
 @router.get("/{job_id}", response_model=JobResponse)
@@ -64,14 +67,18 @@ async def create_job(data: JobCreate, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/{job_id}", response_model=JobResponse)
 async def update_job(
-    job_id: uuid.UUID, data: JobUpdate, db: AsyncSession = Depends(get_db)
+    job_id: uuid.UUID,
+    data: JobUpdate,
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Job).where(Job.id == job_id))
     job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(job, key, value)
+
     await db.flush()
     await db.refresh(job)
     return JobResponse.model_validate(job)
